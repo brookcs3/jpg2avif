@@ -29,8 +29,8 @@ interface AcceptedFile extends File {
   path?: string;
 }
 
-// The main component (without memo yet)
-function DropConvertInner() {
+// Performance optimization: Using memo to prevent unnecessary re-renders
+const DropConvert = memo(function DropConvert() {
   const [isReady, setIsReady] = useState(true); // For MVP, set this to true directly
   const [files, setFiles] = useState<AcceptedFile[]>([]);
   const [status, setStatus] = useState<'idle' | 'ready' | 'processing' | 'error' | 'success'>('idle');
@@ -382,289 +382,407 @@ function DropConvertInner() {
           console.log('Auto-download triggered for single file via main thread:', fileName);
         }, 500);
       } else {
-        // Multiple files - batch processing with ZIP
-        console.log(`Processing ${totalFiles} files in batch mode (main thread)`);
+        // Multiple files - create ZIP with compression (for all files > 1)
+        const zip = new JSZip();
         
-        // Show a progress indicator
-        setProcessingFile(1);
+        // Process files in batches for better UI responsiveness
+        const BATCH_SIZE = 3; // Process 3 files at a time
         
-        try {
-          // Create a ZIP file with JSZip
-          const zip = new JSZip();
+        for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
+          // Create a batch of promises
+          const batchPromises = [];
           
-          // Process each file
-          for (let i = 0; i < totalFiles; i++) {
-            const file = files[i];
+          // Calculate the end of this batch
+          const endIndex = Math.min(i + BATCH_SIZE, totalFiles);
+          
+          // Create promises for each file in the batch
+          for (let j = i; j < endIndex; j++) {
+            const file = files[j];
+            const extension = jpgToAvif ? '.avif' : '.jpg';
+            const outputName = file.name.replace(/\.(avif|png|jpe?g)$/i, extension);
             
-            // Update processing indicator
-            setProcessingFile(i + 1);
-            setProgress(Math.round(((i + 1) / totalFiles) * 70)); // Up to 70% for processing
+            // Create a promise for this file processing
+            const processPromise = (async () => {
+              // Read the file data efficiently
+              const fileData = await readFileOptimized(file);
+              
+              // In real implementation, convert AVIF to JPG here
+              
+              // Add to zip with compression
+              zip.file(outputName, fileData, {
+                compression: "DEFLATE",
+                compressionOptions: {
+                  level: 6 // Medium compression - good balance between speed and size
+                }
+              });
+              
+              return j + 1; // Return the file index for progress tracking
+            })();
             
-            // Get the file data
-            const fileData = await readFileOptimized(file);
-            
-            // Add to ZIP with output extension based on conversion mode
-            const outputName = file.name.replace(/\.(avif|png|jpe?g)$/i, jpgToAvif ? '.avif' : '.jpg');
-            zip.file(outputName, fileData);
+            batchPromises.push(processPromise);
           }
           
-          // Update progress for ZIP generation
-          setProgress(80);
+          // Wait for all files in this batch to be processed
+          const processedIndices = await Promise.all(batchPromises);
           
-          // Generate ZIP file - optimize compression level for speed on larger batches
-          // Lower compression level = faster processing, slightly larger file
-          const compressionLevel = totalFiles > 10 ? 3 : 6;
+          // Update the UI with the most recent file processed
+          const latestFileProcessed = Math.max(...processedIndices);
+          setProcessingFile(latestFileProcessed);
           
-          const zipBlob = await zip.generateAsync({
-            type: 'blob',
-            compression: 'DEFLATE',
-            compressionOptions: {
-              level: compressionLevel
-            },
-            streamFiles: true // Better performance for large ZIPs
-          });
+          // Update progress based on number of files processed
+          setProgress(Math.round((latestFileProcessed / totalFiles) * 100));
+        }
+        
+        // Generate zip with streaming for better memory usage
+        const zipBlob = await zip.generateAsync({ 
+          type: 'blob',
+          compression: "DEFLATE",
+          compressionOptions: {
+            level: 6
+          },
+          streamFiles: true 
+        });
+        
+        const url = URL.createObjectURL(zipBlob);
+        setDownloadUrl(url);
+        setStatus('success');
+        
+        // Auto-download ZIP file after a short delay - force download
+        setTimeout(() => {
+          // ZIP files have application/zip MIME type which is already a download type,
+          // so we keep it as is with the download attribute to ensure it works properly
+          const forceDownloadBlob = new Blob([zipBlob], { type: 'application/zip' });
+          const forceUrl = URL.createObjectURL(forceDownloadBlob);
           
-          setProgress(100);
+          const downloadLink = document.createElement('a');
+          downloadLink.href = forceUrl;
+          downloadLink.download = "converted_images.zip";
+          downloadLink.setAttribute('download', "converted_images.zip"); // Explicit download attribute
           
-          // Create download URL
-          const url = URL.createObjectURL(zipBlob);
-          setDownloadUrl(url);
-          setStatus('success');
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
           
-          // Trigger auto-download of the ZIP file
-          setTimeout(() => {
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            downloadLink.download = 'converted_images.zip';
-            downloadLink.setAttribute('download', 'converted_images.zip'); // Explicit download attribute
+          console.log('Auto-download triggered for ZIP with', files.length, 'files');
+        }, 500);
+      }
+    } catch (error: any) {
+      console.error('Conversion error:', error);
+      setStatus('error');
+      setErrorMessage(error.message || 'Conversion failed');
+    }
+  };
+  
+  // Remove a file from the list
+  const removeFile = (indexToRemove: number) => {
+    setFiles(files.filter((_, index) => index !== indexToRemove));
+    if (files.length <= 1) {
+      setStatus('idle');
+    }
+  };
+  
+  // Handle file download - uses application/octet-stream to force download
+  const handleDownload = () => {
+    if (status === 'success' && downloadUrl) {
+      try {
+        // Get the blob from the URL
+        fetch(downloadUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            // Use application/octet-stream MIME type to force browser download behavior
+            // except for ZIP files which need application/zip MIME type
+            // Files > 1 (2+ files) should be zipped
+            const type = files.length > 1
+              ? 'application/zip'
+              : 'application/octet-stream';
+            const forceDownloadBlob = new Blob([blob], { type });
+            const forceUrl = URL.createObjectURL(forceDownloadBlob);
             
+            // Create a hidden anchor element to trigger download
+            const downloadLink = document.createElement('a');
+            downloadLink.href = forceUrl;
+            
+            if (files.length === 1) {
+              // Single file download - safely handle file name
+              const safeFileName = files[0] && files[0].name 
+                ? files[0].name 
+                : 'converted-file';
+              const fileName = safeFileName.replace(/\.(avif|png|jpe?g)$/i, jpgToAvif ? '.avif' : '.jpg');
+              downloadLink.download = fileName;
+              downloadLink.setAttribute('download', fileName); // Explicit download attribute
+              console.log('Downloading single file:', fileName);
+            } else {
+              // ZIP download
+              downloadLink.download = "converted_images.zip";
+              downloadLink.setAttribute('download', "converted_images.zip"); // Explicit download attribute
+              console.log('Downloading ZIP with', files.length, 'files');
+            }
+            
+            // Add to document, click, and remove
             document.body.appendChild(downloadLink);
             downloadLink.click();
             document.body.removeChild(downloadLink);
             
-            console.log('Auto-download triggered for ZIP file via main thread');
-          }, 500);
-        } catch (err: any) {
-          console.error('Error during batch conversion:', err);
-          setStatus('error');
-          setErrorMessage(err.message || 'Error creating ZIP file');
-        }
+            // Track analytics
+            if (window.performance && window.performance.now) {
+              console.log('Conversion time:', Math.round(window.performance.now()), 'ms');
+            }
+          });
+      } catch (error) {
+        console.error('Error during manual download:', error);
       }
-    } catch (err: any) {
-      console.error('Error during conversion process:', err);
-      setStatus('error');
-      setErrorMessage(err.message || 'Conversion failed');
     }
   };
   
-  // Reset the state when an error occurs or for a new conversion
-  const resetConversion = () => {
-    setStatus('idle');
-    setErrorMessage('');
-    setProgress(0);
-    setProcessingFile(0);
-    setFiles([]);
-    
-    // Clean up any URLs to prevent memory leaks
-    if (downloadUrl) {
-      URL.revokeObjectURL(downloadUrl);
-      setDownloadUrl(null);
-    }
-  };
-  
-  // Toggle between JPG-to-AVIF and AVIF-to-JPG modes
-  // This controls the direction of conversion
-  const toggleConversionMode = useCallback(() => {
-    setJpgToAvif(prev => !prev);
-  }, []);
-  
-  // Display content based on the current status
   return (
-    <div className="w-full max-w-3xl mx-auto bg-background/50 backdrop-blur-sm rounded-xl border shadow-sm p-5 mb-8">
-      {/* Header with toggle for conversion direction */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold">Convert Images</h2>
-        <div className="flex items-center gap-2">
-          <span className={`text-sm ${!jpgToAvif ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
-            AVIF to JPG
-          </span>
-          <Switch 
-            checked={jpgToAvif} 
-            onCheckedChange={toggleConversionMode} 
-            className={jpgToAvif ? 'bg-primary' : ''}
-          />
-          <span className={`text-sm ${jpgToAvif ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
-            JPG to AVIF
-          </span>
-          <ArrowLeftRight className="ml-1.5 w-4 h-4 text-muted-foreground" />
-        </div>
-      </div>
-      
-      {/* Main content area based on status */}
-      {status === 'idle' && (
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+      {/* File Drop Zone */}
+      <div className="p-6 border-b border-gray-200">
         <div 
           {...getRootProps()} 
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive 
-              ? 'border-primary bg-primary/5' 
-              : 'border-border/50 hover:border-primary/50 hover:bg-primary/5'
+            isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/70 hover:bg-primary/5'
           }`}
         >
           <input {...getInputProps()} />
-          <Cloud className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-          <p className="text-lg font-medium mb-1">Drag & drop images here</p>
-          <p className="text-sm text-muted-foreground mb-3">
-            {jpgToAvif
-              ? 'Convert JPG/PNG to space-saving AVIF format' 
-              : 'Convert AVIF to widely-compatible JPG format'}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.multiple = true;
-              input.accept = jpgToAvif 
-                ? '.jpg,.jpeg,.png' 
-                : '.avif';
-              input.onchange = (e) => {
-                // @ts-ignore
-                if (e.target.files) {
-                  // @ts-ignore
-                  onDrop(Array.from(e.target.files));
-                }
-              };
-              input.click();
-            }}
-          >
-            <FileImage className="mr-2 h-4 w-4" />
-            Browse Files
-          </Button>
-        </div>
-      )}
-      
-      {status === 'ready' && (
-        <div className="rounded-lg border p-4">
-          <div className="mb-4">
-            <h3 className="text-lg font-medium mb-2">Ready to Convert {files.length} {files.length === 1 ? 'File' : 'Files'}</h3>
-            <p className="text-sm text-muted-foreground">
-              {jpgToAvif
-                ? 'Convert to space-saving AVIF format'
-                : 'Convert to widely-compatible JPG format'}
-            </p>
-          </div>
           
-          <div className="mb-4 max-h-40 overflow-y-auto">
-            <ul className="space-y-1">
-              {files.map((file, index) => (
-                <li key={index} className="text-sm flex items-center text-muted-foreground">
-                  <FileImage className="mr-2 h-3 w-3" />
-                  {file.name} ({formatFileSize(file.size)})
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Initial State */}
+          {status === 'idle' && (
+            <div>
+              <Cloud className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-lg text-gray-700 font-medium">
+                Drop {jpgToAvif ? 'JPG' : 'AVIF'} files here
+              </p>
+              <p className="text-gray-500 text-sm mt-1">
+                Convert {jpgToAvif ? 'JPG images to AVIF format' : 'AVIF images to JPG format'}
+              </p>
+              
+              {/* Conversion Mode Toggle */}
+              <div className="mt-4 flex items-center justify-center space-x-2">
+                <span className="text-xs font-medium text-gray-500">AVIF → JPG</span>
+                <Switch 
+                  checked={jpgToAvif} 
+                  onCheckedChange={setJpgToAvif} 
+                  className="data-[state=checked]:bg-primary" 
+                />
+                <span className="text-xs font-medium text-gray-500">JPG → AVIF</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="ml-1 h-6 w-6 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering file upload
+                    setJpgToAvif(!jpgToAvif);
+                  }}
+                  title="Switch conversion direction"
+                >
+                  <ArrowLeftRight className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          )}
           
-          <div className="flex gap-3">
-            <Button
-              onClick={convertFiles}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Zap className="mr-2 h-4 w-4" />
-              Start Conversion
-            </Button>
-            <Button
-              variant="outline"
-              onClick={resetConversion}
-            >
-              <X className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-      
-      {status === 'processing' && (
-        <div className="rounded-lg border p-6 text-center">
-          <Loader className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
-          <h3 className="text-lg font-medium mb-2">Converting Files...</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {processingFile > 0 && files.length > 1 
-              ? `Processing file ${processingFile} of ${files.length}` 
-              : 'Processing your file...'}
-          </p>
-          <Progress value={progress} className="h-2 mb-2" />
-          <p className="text-xs text-muted-foreground">{progress}% complete</p>
-        </div>
-      )}
-      
-      {status === 'success' && (
-        <div className="rounded-lg border border-primary/10 bg-primary/5 p-6 text-center">
-          <CheckCircle className="h-8 w-8 mx-auto mb-4 text-primary" />
-          <h3 className="text-lg font-medium mb-2">Conversion Complete!</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {files.length === 1 
-              ? 'Your file has been successfully converted' 
-              : `All ${files.length} files have been converted and compressed into a ZIP file`}
-          </p>
-          <div className="flex gap-3 justify-center">
-            <Button
-              onClick={() => {
-                // Create a download link for the converted file
-                if (downloadUrl) {
-                  const link = document.createElement('a');
-                  link.href = downloadUrl;
-                  link.download = files.length === 1 
-                    ? files[0].name.replace(/\.(avif|png|jpe?g)$/i, jpgToAvif ? '.avif' : '.jpg')
-                    : 'converted_images.zip';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+          {/* Files Selected State */}
+          {status === 'ready' && (
+            <div>
+              <CheckCircle className="h-16 w-16 text-success-500 mx-auto mb-4" />
+              <p className="text-lg text-gray-700 font-medium">{files.length} file(s) ready</p>
+              <p className="text-gray-500 text-sm mt-1">
+                Converting from {jpgToAvif ? 'JPG to AVIF' : 'AVIF to JPG'}
+              </p>
+              
+              {/* Mode and speed optimization indicators */}
+              <div className="mt-3 flex flex-col items-center gap-2">
+                {/* Conversion mode indicator */}
+                <div className="inline-flex items-center text-xs px-2 py-1 bg-success-50 text-success-700 rounded">
+                  <ArrowLeftRight className="h-3 w-3 mr-1" />
+                  Mode: {jpgToAvif ? 'JPG → AVIF' : 'AVIF → JPG'}
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="ml-1 h-5 w-5 rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering file upload
+                      setJpgToAvif(!jpgToAvif);
+                    }}
+                    title="Switch conversion direction"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </Button>
+                </div>
+                
+                {/* Speed hint - show which optimizations are active */}
+                <div className="inline-flex items-center text-xs px-2 py-1 bg-primary/5 text-primary rounded">
+                  <Zap className="h-3 w-3 mr-1" />
+                  {capabilities.hasWebWorker 
+                    ? 'Using high-speed parallel processing' 
+                    : 'Using optimized processing'}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Processing State */}
+          {status === 'processing' && (
+            <div>
+              <RefreshCw className="h-16 w-16 text-primary mx-auto mb-4 animate-spin" />
+              <p className="text-lg text-gray-700 font-medium">
+                Converting to {jpgToAvif ? 'AVIF' : 'JPG'}...
+              </p>
+              <div className="mt-4 relative">
+                <Progress value={progress} className="h-2.5" />
+                <p className="text-sm text-gray-500 mt-1">
+                  {progress}% complete ({processingFile}/{files.length} files)
+                </p>
+              </div>
+              
+              {/* Mode indicator during conversion */}
+              <div className="mt-3 inline-flex items-center text-xs px-2 py-1 bg-primary/5 text-primary rounded">
+                <ArrowLeftRight className="h-3 w-3 mr-1" />
+                Converting: {jpgToAvif ? 'JPG → AVIF' : 'AVIF → JPG'}
+              </div>
+            </div>
+          )}
+          
+          {/* Error State */}
+          {status === 'error' && (
+            <div>
+              <AlertTriangle className="h-16 w-16 text-warning-500 mx-auto mb-4" />
+              <p className="text-lg text-gray-700 font-medium">
+                Error During {jpgToAvif ? 'AVIF' : 'JPG'} Conversion
+              </p>
+              <p className="text-gray-500 text-sm mt-1">
+                {errorMessage || `Failed to convert to ${jpgToAvif ? 'AVIF' : 'JPG'} format`}
+              </p>
+              <p className="text-gray-500 text-sm mt-1">Drop files again to retry</p>
+              
+              {/* Failed conversion mode indicator */}
+              <div className="mt-3 inline-flex items-center text-xs px-2 py-1 bg-warning-50 text-warning-700 rounded">
+                <ArrowLeftRight className="h-3 w-3 mr-1" />
+                Failed: {jpgToAvif ? 'JPG → AVIF' : 'AVIF → JPG'} conversion
+              </div>
+            </div>
+          )}
+          
+          {/* Success State */}
+          {status === 'success' && (
+            <div>
+              <CheckCircle className="h-16 w-16 text-success-500 mx-auto mb-4" />
+              <p className="text-lg text-gray-700 font-medium">
+                {jpgToAvif ? 'AVIF' : 'JPG'} Conversion Complete!
+              </p>
+              <p className="text-gray-500 text-sm mt-1">
+                {files.length === 1 
+                  ? `Your ${jpgToAvif ? 'AVIF' : 'JPG'} file is ready to download` 
+                  : `Your ${files.length} files are ready to download in ZIP format`
                 }
-              }}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              {files.length === 1 ? 'Download File' : 'Download ZIP'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={resetConversion}
+              </p>
+              
+              {/* Show conversion mode badge */}
+              <div className="mt-3 inline-flex items-center text-xs px-2 py-1 bg-success-50 text-success-700 rounded">
+                <ArrowLeftRight className="h-3 w-3 mr-1" />
+                Converted: {jpgToAvif ? 'JPG → AVIF' : 'AVIF → JPG'}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Cross-Origin Warning */}
+        {!window.crossOriginIsolated && (
+          <div className="mt-3 p-2 bg-warning-50 border border-warning-200 rounded text-warning-700 text-sm">
+            <AlertTriangle className="inline-block h-4 w-4 mr-1" />
+            Warning: Cross-Origin Isolation not enabled. Performance may be limited.
+          </div>
+        )}
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="px-6 py-4 bg-gray-50">
+        {/* Conversion Button - Full Width */}
+        <div className="w-full">
+          {/* Always show the conversion button except when processing or success */}
+          {status !== 'processing' && status !== 'success' && (
+            <Button 
+              variant="default" 
+              className="w-full" 
+              onClick={convertFiles} 
+              disabled={!isReady || files.length === 0}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Convert More
+              {files.length === 1 
+                ? jpgToAvif 
+                  ? 'Convert to AVIF' 
+                  : 'Convert to JPG'
+                : jpgToAvif 
+                  ? `Convert ${files.length} files to AVIF` 
+                  : `Convert ${files.length} files to JPG`
+              }
             </Button>
-          </div>
+          )}
+          
+          {/* Processing state */}
+          {status === 'processing' && (
+            <Button 
+              variant="default" 
+              className="w-full opacity-70" 
+              disabled
+            >
+              <Loader className="mr-2 h-4 w-4 animate-spin" />
+              Converting to {jpgToAvif ? 'AVIF' : 'JPG'}...
+            </Button>
+          )}
+          
+          {/* After success, show "Convert more" button */}
+          {status === 'success' && (
+            <div className="relative w-full">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => setStatus('idle')}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Convert More Files
+              </Button>
+              <div className="absolute top-full left-0 right-0 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded text-center">
+                Your file{files.length > 1 ? 's are' : ' is'} downloading automatically
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
       
-      {status === 'error' && (
-        <div className="rounded-lg border border-destructive/10 bg-destructive/5 p-6 text-center">
-          <AlertTriangle className="h-8 w-8 mx-auto mb-4 text-destructive" />
-          <h3 className="text-lg font-medium mb-2">Conversion Failed</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {errorMessage || 'There was an error converting your files'}
-          </p>
-          <Button
-            variant="outline"
-            onClick={resetConversion}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
-          </Button>
+      {/* File List */}
+      {files.length > 0 && (
+        <div className="px-6 py-4 border-t border-gray-200">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Selected Files</h3>
+          <ul className="divide-y divide-gray-200">
+            {files.map((file, index) => (
+              <li key={index} className="py-3 flex justify-between items-center">
+                <div className="flex items-center">
+                  <FileImage className="text-gray-400 mr-3 h-4 w-4" />
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <span className="ml-2 text-xs text-gray-500">({formatFileSize(file.size)})</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => removeFile(index)}
+                  className="h-8 w-8 text-gray-400 hover:text-gray-800" 
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
   );
-}
+});
 
-// Create a memoized version of the component
-const DropConvert = memo(DropConvertInner);
-
-// Add display name for better debugging
+// Use displayName for better debugging in React DevTools
 DropConvert.displayName = 'DropConvert';
 
+// Export the memoized component
 export default DropConvert;

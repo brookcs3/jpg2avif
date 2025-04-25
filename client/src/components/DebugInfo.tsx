@@ -1,40 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { siteConfig } from '@/config';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const DebugInfo = () => {
+// Optimized version that only runs in development mode
+const DebugInfo = memo(() => {
+  // Only show debug in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  // If not in development, render nothing
+  if (!isDevelopment) {
+    return null;
+  }
+
+  return <DebugContent />;
+});
+
+// Separate the content to prevent unnecessary rendering
+const DebugContent = () => {
   const [showDebug, setShowDebug] = useState(false);
-  const [siteMode, setSiteMode] = useState<string>('');
-  const [modeReason, setModeReason] = useState<string>('');
   
-  const hostname = window.location.hostname.toLowerCase();
-  const protocol = window.location.protocol;
-  const fullUrl = window.location.href;
-  const urlParams = new URLSearchParams(window.location.search);
-  const forceSite = urlParams.get('site')?.toLowerCase();
-
-  useEffect(() => {
+  const debugData = useMemo(() => {
+    const hostname = window.location.hostname.toLowerCase();
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceSite = urlParams.get('site')?.toLowerCase();
+    
     // Determine site mode based on URL and hostname
+    let siteMode = 'AVIFlip';
+    let modeReason = 'Default fallback';
+    
     if (forceSite === 'jpgflip') {
-      setSiteMode('JPGFlip');
-      setModeReason('URL parameter override');
+      siteMode = 'JPGFlip';
+      modeReason = 'URL parameter override';
     } else if (forceSite === 'aviflip') {
-      setSiteMode('AVIFlip');
-      setModeReason('URL parameter override');
+      siteMode = 'AVIFlip';
+      modeReason = 'URL parameter override'; 
     } else if (hostname === 'jpgflip.com' || hostname === 'www.jpgflip.com') {
-      setSiteMode('JPGFlip');
-      setModeReason('Hostname match');
+      siteMode = 'JPGFlip';
+      modeReason = 'Hostname match';
     } else if (hostname === 'aviflip.com' || hostname === 'www.aviflip.com') {
-      setSiteMode('AVIFlip');
-      setModeReason('Hostname match');
-    } else {
-      setSiteMode('AVIFlip');
-      setModeReason('Default fallback');
+      siteMode = 'AVIFlip';
+      modeReason = 'Hostname match';
     }
-  }, [hostname, forceSite]);
-
+    
+    return {
+      siteMode,
+      modeReason,
+      hostname,
+      protocol: window.location.protocol,
+      fullUrl: window.location.href,
+      forceSite,
+    };
+  }, []);
+  
   if (!showDebug) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
@@ -42,7 +61,7 @@ const DebugInfo = () => {
           variant="outline" 
           size="sm" 
           onClick={() => setShowDebug(true)}
-          className="opacity-50 hover:opacity-100"
+          className="opacity-30 hover:opacity-100"
         >
           Debug
         </Button>
@@ -51,68 +70,47 @@ const DebugInfo = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-96 max-w-[90vw]">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Debug Information</span>
+    <div className="fixed bottom-4 right-4 z-50 w-80 max-w-[90vw]">
+      <Card className="shadow-lg">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center justify-between">
+            <span>Debug Info</span>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => setShowDebug(false)}
+              className="h-7 w-7 p-0"
             >
-              Close
+              ✕
             </Button>
           </CardTitle>
-          <CardDescription>Domain and configuration data</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <strong>Current Mode:</strong> 
-              <Badge variant={siteMode === 'JPGFlip' ? 'outline' : 'default'}>
-                {siteMode}
-              </Badge>
-              <span className="text-xs text-muted-foreground">({modeReason})</span>
-            </div>
-            
-            <div className="p-2 bg-muted rounded-md mb-2">
-              <div className="font-medium mb-1">URL Parameters:</div>
-              <div><strong>site=</strong> {forceSite || 'Not set'}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Add ?site=jpgflip or ?site=aviflip to force a mode
-              </div>
-            </div>
-            
-            <div>
-              <strong>Hostname:</strong> {hostname}
-            </div>
-            <div>
-              <strong>Protocol:</strong> {protocol}
-            </div>
-            <div>
-              <strong>Full URL:</strong> {fullUrl}
-            </div>
-            <div>
-              <strong>Site Name:</strong> {siteConfig.siteName}
-            </div>
-            <div>
-              <strong>Default Mode:</strong> {siteConfig.defaultConversionMode}
-            </div>
-            <div>
-              <strong>Domain:</strong> {siteConfig.domain}
-            </div>
-            <div>
-              <strong>Document Referrer:</strong> {document.referrer || 'None'}
-            </div>
+        <CardContent className="text-xs space-y-1.5 pt-0">
+          <div className="flex items-center gap-2">
+            <strong>Mode:</strong> 
+            <Badge variant={debugData.siteMode === 'JPGFlip' ? 'outline' : 'default'} className="text-[10px] h-4">
+              {debugData.siteMode}
+            </Badge>
+            <span className="text-[10px] text-muted-foreground">({debugData.modeReason})</span>
+          </div>
+          
+          <div>
+            <strong>Site:</strong> {siteConfig.siteName}
+          </div>
+          <div>
+            <strong>Default:</strong> {siteConfig.defaultConversionMode}
+          </div>
+          <div>
+            <strong>Host:</strong> {debugData.hostname}
+          </div>
+          <div>
+            <strong>URL param:</strong> {debugData.forceSite || 'None'}
           </div>
         </CardContent>
-        <CardFooter className="text-xs text-gray-500">
-          This debug panel is for development purposes only.
-        </CardFooter>
       </Card>
     </div>
   );
 };
 
+DebugInfo.displayName = 'DebugInfo';
 export default DebugInfo;

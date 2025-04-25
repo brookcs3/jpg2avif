@@ -42,7 +42,7 @@ self.onmessage = async (event) => {
     const totalFiles = files.length;
     
     // Process files in parallel for better performance
-    const processedFiles = await Promise.all(files.map(async (file, index) => {
+    const processedFiles = await Promise.all(files.map(async (file: File, index: number) => {
       const outputName = file.name.replace(fileExtensionRegex, outputExtension);
       const fileData = await readFileAsArrayBuffer(file);
       
