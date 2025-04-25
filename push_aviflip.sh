@@ -4,46 +4,36 @@
 
 echo "Starting deployment of AVIFlip to aviflip.com..."
 
-# Create a temporary directory for aviflip
-mkdir -p /tmp/aviflip-pages
-
-# Remove existing directory to avoid conflicts
-rm -rf /tmp/aviflip-pages/*
-
 # Build the project for production
 echo "Building project for production..."
 NODE_ENV=production npm run build
 
-# Copy the build output to the temporary directory
-echo "Copying build files..."
-cp -r dist/* /tmp/aviflip-pages/
+# Create a CNAME file for aviflip.com
+echo "Creating CNAME file for aviflip.com..."
+echo "aviflip.com" > dist/public/CNAME
 
-# Ensure CNAME file exists in the root
-echo "Setting up CNAME for aviflip.com..."
-echo "aviflip.com" > /tmp/aviflip-pages/CNAME
+# Setup git worktree for gh-pages branch
+echo "Setting up GitHub Pages deployment..."
+git worktree add -f dist/public gh-pages 2>/dev/null || git branch gh-pages && git worktree add -f dist/public gh-pages
 
-# Get current directory
-CURRENT_DIR=$(pwd)
+# Navigate to the build directory
+cd dist/public
 
-# Initialize git repository
-cd /tmp/aviflip-pages
-echo "Initializing Git repository for GitHub Pages..."
-git init --initial-branch=main
-git add .
-git config --local user.email "brooksc3@oregonstate.edu"
-git config --local user.name "brookcs3"
+# Add all files to git
+echo "Committing changes to gh-pages branch..."
+git add --all
 git commit -m "Deploy AVIFlip - optimized AVIF to JPG converter"
 
-# Make sure there's no existing origin
-git remote remove origin 2>/dev/null || true
+# Push to GitHub
+echo "Pushing to GitHub Pages..."
+git push origin gh-pages --force
 
-# Add the correct remote and push
-echo "Pushing to GitHub Pages repository..."
-git remote add origin https://x-access-token:${GITHUB_TOKEN}@github.com/brookcs3/aviflip.com.git
-git push -u origin main --force
+# Back to original directory
+cd ../..
 
-# Go back to original directory
-cd $CURRENT_DIR
+# Clean up
+git worktree remove dist/public
 
 echo "Successfully deployed AVIFlip to aviflip.com!"
 echo "Note: It may take a few minutes for GitHub Pages to update."
+echo "Make sure to enable GitHub Pages in your repository settings, using the gh-pages branch as source."
