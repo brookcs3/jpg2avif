@@ -1,37 +1,59 @@
 #!/bin/bash
 
-# Create a temporary directory for jpgflip-full
-mkdir -p /tmp/jpgflip-clone
+# This script prepares and pushes JPGFlip to GitHub
+# It builds the app with the JPGFlip configuration and pushes to the jpgflip repository
 
-# Remove existing directory to avoid conflicts
-rm -rf /tmp/jpgflip-clone/*
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-# Copy the files to the temporary directory
-cp -r jpgflip-full/* /tmp/jpgflip-clone/
-cp -r jpgflip-full/.* /tmp/jpgflip-clone/ 2>/dev/null || true
+echo -e "${BLUE}Starting JPGFlip deployment process...${NC}"
 
-# Ensure CNAME file exists in the root
-cp jpgflip-full/CNAME /tmp/jpgflip-clone/ 2>/dev/null || echo "jpgflip.com" > /tmp/jpgflip-clone/CNAME
+# Check if GitHub token exists
+if [ -z "$GITHUB_TOKEN" ]; then
+  echo -e "${RED}Error: GITHUB_TOKEN is not set. Please set it first.${NC}"
+  exit 1
+fi
 
-# Get current directory
+# Save current directory
 CURRENT_DIR=$(pwd)
 
-# Initialize git repository
-cd /tmp/jpgflip-clone
-git init --initial-branch=main
+# Change to the jpgflip directory
+cd "$CURRENT_DIR/jpgflip-full" || { echo -e "${RED}Failed to enter jpgflip-full directory${NC}"; exit 1; }
+
+# Build the application
+echo -e "${BLUE}Building JPGFlip...${NC}"
+npm run build || { echo -e "${RED}Build failed${NC}"; exit 1; }
+
+# Initialize git repository if it doesn't exist
+if [ ! -d .git ]; then
+  echo -e "${BLUE}Initializing git repository...${NC}"
+  git init
+  git config user.name "JPGFlip Deployment"
+  git config user.email "deploy@jpgflip.com"
+fi
+
+# Add all files
+echo -e "${BLUE}Adding files to git...${NC}"
 git add .
-git config --local user.email "brooksc3@oregonstate.edu"
-git config --local user.name "brookcs3"
-git commit -m "Initial commit of JPGFlip - fully functional JPG to AVIF converter"
 
-# Make sure there's no existing origin
-git remote remove origin 2>/dev/null || true
+# Commit changes
+echo -e "${BLUE}Committing changes...${NC}"
+git commit -m "JPGFlip deployment $(date +%Y-%m-%d_%H-%M-%S)"
 
-# Add the correct remote and push
-git remote add origin https://x-access-token:${GITHUB_FULL_ACCESS_TOKEN}@github.com/brookcs3/jpgflip-full.git
-git push -u origin main --force
+# Check if remote exists, if not add it
+if ! git remote | grep -q origin; then
+  echo -e "${BLUE}Adding remote repository...${NC}"
+  git remote add origin https://github.com/brookcs3/jpgflip.git
+fi
 
-# Go back to original directory
-cd $CURRENT_DIR
+# Push to GitHub using token authentication
+echo -e "${BLUE}Pushing to GitHub...${NC}"
+git push -f "https://x-access-token:$GITHUB_TOKEN@github.com/brookcs3/jpgflip.git" main
 
-echo "Successfully pushed all files to jpgflip-full repository"
+# Return to the original directory
+cd "$CURRENT_DIR"
+
+echo -e "${GREEN}JPGFlip deployment complete!${NC}"
