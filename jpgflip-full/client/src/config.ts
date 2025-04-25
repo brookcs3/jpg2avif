@@ -22,9 +22,9 @@ export interface SiteConfig {
 const jpgFlipConfig: SiteConfig = {
   siteName: 'JPGFlip',
   defaultConversionMode: 'jpgToAvif',
-  primaryColor: '#10b981',
-  secondaryColor: '#059669',
-  accentColor: '#34d399',
+  primaryColor: '#f97316',  // Orange-500
+  secondaryColor: '#ea580c', // Orange-600
+  accentColor: '#fb923c',   // Orange-400
   logoText: 'JPGFlip',
   domain: 'jpgflip.com'
 };
