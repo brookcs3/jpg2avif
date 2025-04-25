@@ -33,9 +33,9 @@ const jpgFlipConfig: SiteConfig = {
 const aviFlipConfig: SiteConfig = {
   siteName: 'AVIFlip',
   defaultConversionMode: 'avifToJpg',
-  primaryColor: '#1a56db',    // Deeper blue
-  secondaryColor: '#1e40af',  // Rich royal blue
-  accentColor: '#38bdf8',     // Bright sky blue
+  primaryColor: '#3b82f6',    // Blue-500
+  secondaryColor: '#2563eb',  // Blue-600
+  accentColor: '#60a5fa',     // Blue-400
   logoText: 'AVIFlip',
   domain: 'aviflip.com'
 };
