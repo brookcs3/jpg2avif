@@ -1,42 +1,18 @@
 #!/bin/bash
 
-# This script deploys the current codebase to aviflip.com via GitHub Pages
+# This script pushes the optimized AVIFlip codebase to GitHub
+# which is then automatically deployed by Cloudflare Pages
 
-echo "Starting deployment of AVIFlip to aviflip.com..."
+echo "Pushing optimized AVIFlip code to GitHub repository..."
 
-# Remove gh-pages branch if it exists
-git branch -D gh-pages 2>/dev/null || true
-
-# Create a new gh-pages branch without history
-git checkout --orphan gh-pages
-
-# Build the project for production
-echo "Building project for production..."
-NODE_ENV=production npm run build
-
-# Copy the build files to the root for GitHub Pages
-echo "Setting up files for GitHub Pages..."
-cp -r dist/public/* .
-
-# Create a CNAME file for aviflip.com
-echo "Creating CNAME file for aviflip.com..."
-echo "aviflip.com" > CNAME
-
-# Clean up unnecessary files from gh-pages branch
-find . -maxdepth 1 ! -name 'assets' ! -name 'index.html' ! -name 'CNAME' ! -name '.git' -exec rm -rf {} \; 2>/dev/null || true
-
-# Add all files to git
-echo "Committing changes to gh-pages branch..."
+# Make sure all changes are committed
 git add .
-git commit -m "Deploy AVIFlip - optimized AVIF to JPG converter"
+git commit -m "Update AVIFlip - optimized performance and UI" || true
 
-# Push to GitHub
-echo "Pushing to GitHub Pages..."
-git push origin gh-pages --force
+# Push to GitHub main branch
+echo "Pushing to GitHub main branch..."
+git push origin main
 
-# Back to main branch
-git checkout main
-
-echo "Successfully deployed AVIFlip to aviflip.com!"
-echo "Note: It may take a few minutes for GitHub Pages to update."
-echo "Make sure to enable GitHub Pages in your repository settings, using the gh-pages branch as source."
+echo "Successfully pushed AVIFlip code to GitHub!"
+echo "Cloudflare Pages will automatically deploy the changes to aviflip.com"
+echo "Note: It may take a few minutes for the deployment to complete."
