@@ -20,19 +20,48 @@ mkdir -p "$PROJECT_DIR"
 
 # Copy all files except Git, node_modules, and dist
 echo "Copying template files to $PROJECT_DIR..."
-rsync -av --progress ./ "$PROJECT_DIR" \
-  --exclude ".git/" \
-  --exclude "node_modules/" \
-  --exclude "dist/" \
-  --exclude "jpgflip-full/" \
-  --exclude "jpgflip-project.zip" \
-  --exclude "aviflip-cloudflare-deploy.zip"
+cp -r ./client "$PROJECT_DIR/"
+cp -r ./server "$PROJECT_DIR/"
+cp -r ./shared "$PROJECT_DIR/"
+cp ./package.json "$PROJECT_DIR/"
+cp ./package-lock.json "$PROJECT_DIR/" 2>/dev/null || :
+cp ./tsconfig.json "$PROJECT_DIR/"
+cp ./vite.config.ts "$PROJECT_DIR/"
+cp ./tailwind.config.ts "$PROJECT_DIR/"
+cp ./postcss.config.js "$PROJECT_DIR/"
+cp ./drizzle.config.ts "$PROJECT_DIR/"
+cp ./components.json "$PROJECT_DIR/"
+cp ./.replit "$PROJECT_DIR/" 2>/dev/null || :
+cp ./replit.nix "$PROJECT_DIR/" 2>/dev/null || :
+cp ./README.md "$PROJECT_DIR/"
 
-# Generate a secondary color that's a bit darker than the primary
-SECONDARY_COLOR=$(echo "$PRIMARY_COLOR" | sed 's/#\(..\)\(..\)\(..\)/#\1\2\3/')
-
-# Generate an accent color that's a bit lighter than the primary
-ACCENT_COLOR=$(echo "$PRIMARY_COLOR" | sed 's/#\(..\)\(..\)\(..\)/#\1\2\3/')
+# Set reasonable default colors if you don't want to calculate them
+# Secondary is a bit darker, accent is a bit lighter
+if [[ "$PRIMARY_COLOR" == "#10b981" ]]; then
+  # Green defaults
+  SECONDARY_COLOR="#059669"
+  ACCENT_COLOR="#34d399"
+elif [[ "$PRIMARY_COLOR" == "#3b82f6" ]]; then
+  # Blue defaults
+  SECONDARY_COLOR="#2563eb"
+  ACCENT_COLOR="#60a5fa"
+elif [[ "$PRIMARY_COLOR" == "#dc2626" ]]; then
+  # Red defaults
+  SECONDARY_COLOR="#b91c1c"
+  ACCENT_COLOR="#f87171"
+elif [[ "$PRIMARY_COLOR" == "#9333ea" ]]; then
+  # Purple defaults
+  SECONDARY_COLOR="#7e22ce"
+  ACCENT_COLOR="#a855f7"
+elif [[ "$PRIMARY_COLOR" == "#f97316" ]]; then
+  # Orange defaults
+  SECONDARY_COLOR="#ea580c"
+  ACCENT_COLOR="#fb923c"
+else
+  # Fallbacks if color isn't recognized
+  SECONDARY_COLOR="$PRIMARY_COLOR"
+  ACCENT_COLOR="$PRIMARY_COLOR"
+fi
 
 # Enter the project directory
 cd "$PROJECT_DIR" || exit
