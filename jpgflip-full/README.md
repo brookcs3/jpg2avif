@@ -1,10 +1,10 @@
-# AVIFlip
+# JPGFlip
 
 <!-- Add your logo here when available -->
-<!-- ![AVIFlip Logo](./path/to/logo.svg) -->
+<!-- ![JPGFlip Logo](./path/to/logo.svg) -->
 <!-- Trigger new deploy -->
 
-A high-performance, privacy-first image converter that transforms images between AVIF and JPG formats with exceptional speed and security.
+A high-performance, privacy-first image converter that transforms JPG images to the AVIF format with exceptional speed and security, while also supporting AVIF to JPG conversion.
 
 ## 🌟 Features
 
