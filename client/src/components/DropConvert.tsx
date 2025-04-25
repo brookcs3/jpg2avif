@@ -480,7 +480,7 @@ function DropConvertInner() {
   
   // Display content based on the current status
   return (
-    <div className="w-full max-w-3xl mx-auto bg-background/50 backdrop-blur-sm rounded-xl border shadow-sm p-5 mb-8">
+    <div className="w-full max-w-3xl mx-auto bg-blue-50/90 backdrop-blur-sm rounded-xl border border-blue-200 shadow-sm p-5 mb-8">
       {/* Header with toggle for conversion direction */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Convert Images</h2>
@@ -504,10 +504,10 @@ function DropConvertInner() {
       {status === 'idle' && (
         <div 
           {...getRootProps()} 
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
             isDragActive 
-              ? 'border-primary bg-primary/5' 
-              : 'border-border/50 hover:border-primary/50 hover:bg-primary/5'
+              ? 'border-primary bg-primary/10 shadow-inner shadow-blue-100' 
+              : 'border-blue-200 hover:border-primary hover:bg-blue-50/80 hover:shadow-inner hover:shadow-blue-50'
           }`}
         >
           <input {...getInputProps()} />
@@ -602,7 +602,7 @@ function DropConvertInner() {
       )}
       
       {status === 'success' && (
-        <div className="rounded-lg border border-primary/10 bg-primary/5 p-6 text-center">
+        <div className="rounded-lg border border-blue-200 bg-gradient-to-b from-blue-50 to-blue-100/50 p-6 text-center shadow-sm">
           <CheckCircle className="h-8 w-8 mx-auto mb-4 text-primary" />
           <h3 className="text-lg font-medium mb-2">Conversion Complete!</h3>
           <p className="text-sm text-muted-foreground mb-4">
