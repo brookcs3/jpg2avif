@@ -704,7 +704,7 @@ const DropConvert = () => {
           {status !== 'processing' && status !== 'success' && (
             <Button 
               variant="default" 
-              className="w-full" 
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md" 
               onClick={convertFiles} 
               disabled={!isReady || files.length === 0}
             >
@@ -724,7 +724,7 @@ const DropConvert = () => {
           {status === 'processing' && (
             <Button 
               variant="default" 
-              className="w-full opacity-70" 
+              className="w-full bg-gradient-to-r from-orange-400 to-orange-500 opacity-80 text-white shadow-md" 
               disabled
             >
               <Loader className="mr-2 h-4 w-4 animate-spin" />
@@ -732,12 +732,20 @@ const DropConvert = () => {
             </Button>
           )}
           
-          {/* After success, show "Convert more" button */}
+          {/* After success, show buttons for download and convert more */}
           {status === 'success' && (
-            <div className="relative w-full">
+            <div className="relative w-full flex flex-col gap-2">
+              <Button 
+                variant="default"
+                onClick={handleDownload}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {files.length === 1 ? 'Download File' : 'Download ZIP'}
+              </Button>
               <Button 
                 variant="outline" 
-                className="w-full" 
+                className="w-full hover:bg-orange-50" 
                 onClick={() => setStatus('idle')}
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
@@ -767,7 +775,7 @@ const DropConvert = () => {
                   variant="ghost" 
                   size="icon" 
                   onClick={() => removeFile(index)}
-                  className="h-8 w-8 text-gray-400 hover:text-gray-800" 
+                  className="h-8 w-8 text-gray-400 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200" 
                 >
                   <X className="h-4 w-4" />
                 </Button>
