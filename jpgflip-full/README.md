@@ -1,7 +1,7 @@
-# JPGFlip
+# AVIFlip
 
 <!-- Add your logo here when available -->
-<!-- ![JPGFlip Logo](./path/to/logo.svg) -->
+<!-- ![AVIFlip Logo](./path/to/logo.svg) -->
 <!-- Trigger new deploy -->
 
 A high-performance, privacy-first image converter that transforms images between AVIF and JPG formats with exceptional speed and security.
@@ -28,7 +28,7 @@ A high-performance, privacy-first image converter that transforms images between
 
 ## 🚀 Getting Started
 
-### Using JPGFlip Online
+### Using AVIFlip Online
 
 Simply visit [aviflip.com](https://aviflip.com) to start converting images instantly.
 

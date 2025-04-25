@@ -24,7 +24,7 @@ const Header = () => {
             </div>
           </div>
           <div className="flex items-center">
-            <a href="https://github.com/brookcs3/jpgflip-full" className="text-gray-500 hover:text-gray-700" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/brookcs3/aviflip" className="text-gray-500 hover:text-gray-700" target="_blank" rel="noopener noreferrer">
               <span className="sr-only">GitHub</span>
               <Github className="h-6 w-6" />
             </a>
