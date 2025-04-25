@@ -28,16 +28,16 @@ A high-performance, privacy-first image converter that transforms JPG images to 
 
 ## 🚀 Getting Started
 
-### Using AVIFlip Online
+### Using JPGFlip Online
 
-Simply visit [aviflip.com](https://aviflip.com) to start converting images instantly.
+Simply visit [jpgflip.com](https://jpgflip.com) to start converting images instantly.
 
 ### Running Locally
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/brookcs3/aviflip.git
-   cd aviflip
+   git clone https://github.com/brookcs3/jpg2avif.git
+   cd jpg2avif
    ```
 
 2. Install dependencies:
