@@ -480,11 +480,11 @@ function DropConvertInner() {
   
   // Display content based on the current status
   return (
-    <div className="w-full max-w-3xl mx-auto bg-background/50 backdrop-blur-sm rounded-xl border shadow-sm p-5 mb-8">
+    <div className="w-full max-w-3xl mx-auto bg-white backdrop-blur-sm rounded-xl border shadow-blue-lg p-6 mb-8 card-hover">
       {/* Header with toggle for conversion direction */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold">Convert Images</h2>
-        <div className="flex items-center gap-2">
+        <h2 className="text-2xl font-bold gradient-text">Convert Images</h2>
+        <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg shadow-blue">
           <span className={`text-sm ${!jpgToAvif ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
             AVIF to JPG
           </span>
@@ -496,7 +496,7 @@ function DropConvertInner() {
           <span className={`text-sm ${jpgToAvif ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
             JPG to AVIF
           </span>
-          <ArrowLeftRight className="ml-1.5 w-4 h-4 text-muted-foreground" />
+          <ArrowLeftRight className="ml-1.5 w-4 h-4 text-blue-500" />
         </div>
       </div>
       
@@ -504,10 +504,10 @@ function DropConvertInner() {
       {status === 'idle' && (
         <div 
           {...getRootProps()} 
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+          className={`enhanced-dropzone rounded-lg p-10 text-center cursor-pointer transition-all ${
             isDragActive 
-              ? 'border-primary bg-primary/5' 
-              : 'border-border/50 hover:border-primary/50 hover:bg-primary/5'
+              ? 'active border-blue-400 bg-blue-50/70' 
+              : 'hover:border-blue-400 hover:bg-blue-50/50'
           }`}
         >
           <input {...getInputProps()} />
@@ -547,9 +547,9 @@ function DropConvertInner() {
       )}
       
       {status === 'ready' && (
-        <div className="rounded-lg border p-4">
+        <div className="rounded-lg border shadow-blue p-5 bg-gradient-to-br from-white to-blue-50/50">
           <div className="mb-4">
-            <h3 className="text-lg font-medium mb-2">Ready to Convert {files.length} {files.length === 1 ? 'File' : 'Files'}</h3>
+            <h3 className="text-lg font-bold gradient-text mb-2">Ready to Convert {files.length} {files.length === 1 ? 'File' : 'Files'}</h3>
             <p className="text-sm text-muted-foreground">
               {jpgToAvif
                 ? 'Convert to space-saving AVIF format'
@@ -557,12 +557,12 @@ function DropConvertInner() {
             </p>
           </div>
           
-          <div className="mb-4 max-h-40 overflow-y-auto">
-            <ul className="space-y-1">
+          <div className="mb-4 max-h-40 overflow-y-auto rounded-md bg-white/80 p-3 shadow-sm">
+            <ul className="space-y-1.5">
               {files.map((file, index) => (
-                <li key={index} className="text-sm flex items-center text-muted-foreground">
-                  <FileImage className="mr-2 h-3 w-3" />
-                  {file.name} ({formatFileSize(file.size)})
+                <li key={index} className="text-sm flex items-center text-muted-foreground hover:text-blue-600 transition-colors">
+                  <FileImage className="mr-2 h-3.5 w-3.5 text-blue-500" />
+                  {file.name} <span className="ml-1 text-xs text-blue-400">({formatFileSize(file.size)})</span>
                 </li>
               ))}
             </ul>
@@ -571,7 +571,7 @@ function DropConvertInner() {
           <div className="flex gap-3">
             <Button
               onClick={convertFiles}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-blue"
             >
               <Zap className="mr-2 h-4 w-4" />
               Start Conversion
@@ -579,6 +579,7 @@ function DropConvertInner() {
             <Button
               variant="outline"
               onClick={resetConversion}
+              className="border-blue-200 hover:bg-blue-50 shadow-sm"
             >
               <X className="mr-2 h-4 w-4" />
               Cancel
@@ -588,24 +589,30 @@ function DropConvertInner() {
       )}
       
       {status === 'processing' && (
-        <div className="rounded-lg border p-6 text-center">
-          <Loader className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
-          <h3 className="text-lg font-medium mb-2">Converting Files...</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="rounded-lg border shadow-blue-lg p-8 text-center bg-white">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-blue-100 flex items-center justify-center shadow-blue">
+            <Loader className="h-10 w-10 animate-spin text-blue-500" />
+          </div>
+          <h3 className="text-xl font-bold gradient-text mb-2">Converting Files...</h3>
+          <p className="text-sm text-muted-foreground mb-6">
             {processingFile > 0 && files.length > 1 
               ? `Processing file ${processingFile} of ${files.length}` 
               : 'Processing your file...'}
           </p>
-          <Progress value={progress} className="h-2 mb-2" />
-          <p className="text-xs text-muted-foreground">{progress}% complete</p>
+          <Progress value={progress} className="h-3 mb-3 bg-blue-100" style={{
+            background: 'linear-gradient(to right, #dbeafe, #eff6ff)'
+          }} />
+          <p className="text-sm font-medium text-blue-500">{progress}% complete</p>
         </div>
       )}
       
       {status === 'success' && (
-        <div className="rounded-lg border border-primary/10 bg-primary/5 p-6 text-center">
-          <CheckCircle className="h-8 w-8 mx-auto mb-4 text-primary" />
-          <h3 className="text-lg font-medium mb-2">Conversion Complete!</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="rounded-lg border shadow-blue-lg p-8 text-center bg-gradient-to-br from-white to-blue-50">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center shadow-blue">
+            <CheckCircle className="h-10 w-10 text-white" />
+          </div>
+          <h3 className="text-xl font-bold gradient-text mb-2">Conversion Complete!</h3>
+          <p className="text-sm text-muted-foreground mb-6">
             {files.length === 1 
               ? 'Your file has been successfully converted' 
               : `All ${files.length} files have been converted and compressed into a ZIP file`}
@@ -625,7 +632,7 @@ function DropConvertInner() {
                   document.body.removeChild(link);
                 }
               }}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-blue px-5 py-2"
             >
               <Download className="mr-2 h-4 w-4" />
               {files.length === 1 ? 'Download File' : 'Download ZIP'}
@@ -633,6 +640,7 @@ function DropConvertInner() {
             <Button
               variant="outline"
               onClick={resetConversion}
+              className="border-blue-200 hover:bg-blue-50 shadow-sm"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Convert More
@@ -642,15 +650,18 @@ function DropConvertInner() {
       )}
       
       {status === 'error' && (
-        <div className="rounded-lg border border-destructive/10 bg-destructive/5 p-6 text-center">
-          <AlertTriangle className="h-8 w-8 mx-auto mb-4 text-destructive" />
-          <h3 className="text-lg font-medium mb-2">Conversion Failed</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="rounded-lg border shadow-blue p-8 text-center bg-white">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center shadow-sm">
+            <AlertTriangle className="h-10 w-10 text-red-500" />
+          </div>
+          <h3 className="text-xl font-bold text-red-600 mb-2">Conversion Failed</h3>
+          <p className="text-sm text-muted-foreground mb-6">
             {errorMessage || 'There was an error converting your files'}
           </p>
           <Button
             variant="outline"
             onClick={resetConversion}
+            className="border-blue-200 hover:bg-blue-50 shadow-sm"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
