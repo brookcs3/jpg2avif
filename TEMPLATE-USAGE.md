@@ -78,6 +78,7 @@ Each project can be deployed to Cloudflare Pages:
 1. **Build settings**:
    - Build command: `npm run build`
    - Build output directory: `dist/public`
+   - **IMPORTANT**: When uploading or deploying, be sure to select "Deploy to production" option to deploy to your main domain
 
 2. **GitHub integration**:
    - You can create a GitHub repository for each project

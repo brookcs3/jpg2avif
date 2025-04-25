@@ -22,6 +22,6 @@ echo "aviflip.com" > dist/public/CNAME
 # Deploy to Cloudflare Pages
 echo "Deploying to Cloudflare Pages..."
 cd dist/public
-wrangler pages publish . --project-name=aviflip
+wrangler pages publish . --project-name=aviflip --production
 
 echo "Deployment complete! Check the Cloudflare dashboard for details."
