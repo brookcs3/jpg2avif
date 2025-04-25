@@ -1,11 +1,9 @@
-import { memo } from 'react';
 import { siteConfig } from '../config';
 
 // Pre-calculate current year to avoid repeated calculations
 const currentYear = new Date().getFullYear();
 
-// Use memo to prevent unnecessary re-renders
-const Footer = memo(() => {
+const Footer = () => {
   return (
     <footer className="bg-white mt-12">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -20,9 +18,6 @@ const Footer = memo(() => {
       </div>
     </footer>
   );
-});
-
-// Add display name for debugging
-Footer.displayName = 'Footer';
+};
 
 export default Footer;
