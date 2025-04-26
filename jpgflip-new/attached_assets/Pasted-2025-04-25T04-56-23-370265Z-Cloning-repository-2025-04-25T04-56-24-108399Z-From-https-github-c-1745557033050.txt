@@ -1,0 +1,77 @@
+2025-04-25T04:56:23.370265Z	Cloning repository...
+2025-04-25T04:56:24.108399Z	From https://github.com/brookcs3/aviflip
+2025-04-25T04:56:24.108937Z	 * branch            4ce839d4e550bb5387961c5892f83968eeb284fc -> FETCH_HEAD
+2025-04-25T04:56:24.109089Z	
+2025-04-25T04:56:24.171988Z	HEAD is now at 4ce839d Checkpoint
+2025-04-25T04:56:24.172474Z	
+2025-04-25T04:56:24.256827Z	
+2025-04-25T04:56:24.257248Z	Using v2 root directory strategy
+2025-04-25T04:56:24.279721Z	Success: Finished cloning repository files
+2025-04-25T04:56:24.967977Z	Restoring from dependencies cache
+2025-04-25T04:56:24.984905Z	Restoring from build output cache
+2025-04-25T04:56:26.230207Z	Checking for configuration in a Wrangler configuration file (BETA)
+2025-04-25T04:56:26.231038Z	
+2025-04-25T04:56:27.337757Z	No wrangler.toml file found. Continuing.
+2025-04-25T04:56:27.405513Z	Detected the following tools from environment: npm@9.6.7, nodejs@18.17.1
+2025-04-25T04:56:27.406344Z	Installing project dependencies: npm clean-install --progress=false
+2025-04-25T04:56:28.820517Z	npm WARN EBADENGINE Unsupported engine {
+2025-04-25T04:56:28.820836Z	npm WARN EBADENGINE   package: 'connect-pg-simple@10.0.0',
+2025-04-25T04:56:28.820988Z	npm WARN EBADENGINE   required: { node: '^18.18.0 || ^20.9.0 || >=22.0.0' },
+2025-04-25T04:56:28.821119Z	npm WARN EBADENGINE   current: { node: 'v18.17.1', npm: '9.6.7' }
+2025-04-25T04:56:28.821247Z	npm WARN EBADENGINE }
+2025-04-25T04:56:32.369478Z	npm WARN deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2025-04-25T04:56:32.503895Z	npm WARN deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2025-04-25T04:56:38.553127Z	
+2025-04-25T04:56:38.553342Z	added 500 packages, and audited 501 packages in 10s
+2025-04-25T04:56:38.553658Z	
+2025-04-25T04:56:38.553892Z	64 packages are looking for funding
+2025-04-25T04:56:38.554097Z	  run `npm fund` for details
+2025-04-25T04:56:38.58631Z	
+2025-04-25T04:56:38.586699Z	7 moderate severity vulnerabilities
+2025-04-25T04:56:38.586883Z	
+2025-04-25T04:56:38.587012Z	To address issues that do not require attention, run:
+2025-04-25T04:56:38.587131Z	  npm audit fix
+2025-04-25T04:56:38.587243Z	
+2025-04-25T04:56:38.587354Z	To address all issues (including breaking changes), run:
+2025-04-25T04:56:38.587482Z	  npm audit fix --force
+2025-04-25T04:56:38.587674Z	
+2025-04-25T04:56:38.587782Z	Run `npm audit` for details.
+2025-04-25T04:56:38.607633Z	Executing user command: npm run build
+2025-04-25T04:56:39.156992Z	
+2025-04-25T04:56:39.157261Z	> rest-express@1.0.0 build
+2025-04-25T04:56:39.15755Z	> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+2025-04-25T04:56:39.157722Z	
+2025-04-25T04:56:39.408684Z	[36mvite v5.4.14 [32mbuilding for production...[36m[39m
+2025-04-25T04:56:39.466857Z	transforming...
+2025-04-25T04:56:39.804835Z	Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+2025-04-25T04:56:39.805366Z	  npx update-browserslist-db@latest
+2025-04-25T04:56:39.805684Z	  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+2025-04-25T04:56:43.911982Z	[32m✓[39m 1699 modules transformed.
+2025-04-25T04:56:44.125534Z	rendering chunks...
+2025-04-25T04:56:44.132194Z	computing gzip size...
+2025-04-25T04:56:44.150062Z	[2m../dist/public/[22m[32mindex.html                            [39m[1m[2m  1.69 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+2025-04-25T04:56:44.150374Z	[2m../dist/public/[22m[2massets/[22m[32mworker-BAOIWoxA.js             [39m[1m[2m  2.53 kB[22m[1m[22m
+2025-04-25T04:56:44.150534Z	[2m../dist/public/[22m[2massets/[22m[32mconversion.worker-1P20qsBC.js  [39m[1m[2m 98.56 kB[22m[1m[22m
+2025-04-25T04:56:44.150632Z	[2m../dist/public/[22m[2massets/[22m[35mindex-Drb3gprC.css             [39m[1m[2m 60.62 kB[22m[1m[22m[2m │ gzip:  10.76 kB[22m
+2025-04-25T04:56:44.150791Z	[2m../dist/public/[22m[2massets/[22m[36mindex-BE96lNWx.js              [39m[1m[2m446.58 kB[22m[1m[22m[2m │ gzip: 140.91 kB[22m
+2025-04-25T04:56:44.150888Z	[32m✓ built in 4.72s[39m
+2025-04-25T04:56:44.207865Z	
+2025-04-25T04:56:44.208138Z	  dist/index.js  4.4kb
+2025-04-25T04:56:44.208281Z	
+2025-04-25T04:56:44.208541Z	⚡ Done in 7ms
+2025-04-25T04:56:44.229726Z	Finished
+2025-04-25T04:56:45.177374Z	Checking for configuration in a Wrangler configuration file (BETA)
+2025-04-25T04:56:45.178269Z	
+2025-04-25T04:56:46.305407Z	No wrangler.toml file found. Continuing.
+2025-04-25T04:56:46.306296Z	Note: No functions dir at /functions found. Skipping.
+2025-04-25T04:56:46.306501Z	Validating asset output directory
+2025-04-25T04:56:49.003018Z	Deploying your site to Cloudflare's global network...
+2025-04-25T04:56:51.482694Z	Uploading... (5/5)
+2025-04-25T04:56:51.48349Z	✨ Success! Uploaded 0 files (5 already uploaded) (0.38 sec)
+2025-04-25T04:56:51.483626Z	
+2025-04-25T04:56:51.803681Z	✨ Upload complete!
+2025-04-25T04:56:54.079322Z	Uploading to dependency cache
+2025-04-25T04:56:54.133039Z	Skipping build output cache as it's not supported for your project
+2025-04-25T04:56:55.383512Z	Success: Dependencies uploaded to build cache.
+2025-04-25T04:56:56.357974Z	Success: Assets published!
+2025-04-25T04:56:58.147476Z	Success: Your site was deployed!
